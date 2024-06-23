@@ -1,0 +1,153 @@
+<html>
+<head>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+body {
+            width: auto;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+.searchContainerEmpty {
+    width: 600px;
+    height: 200px;
+    } 
+
+.searchContainerWithResults {
+    height: 100%;     
+    display: inline-block;
+}
+
+.searchInput {
+    width: 600px;
+    align-items: center;
+}
+.searchPrompt {
+    width: 600px;
+    text-align: center;
+}
+
+/* Results */
+.resultsTable {
+    display: table;
+    min-width: 600px;
+    /* width: 100%; */
+    margin-top: 1em;;
+}
+
+.resultsRow {
+    display: table-row;
+}
+
+.resultsHeader {
+    font-weight: bold;
+    background-color: lightgray;
+}
+
+.resultsCell {
+    display: table-cell;
+    padding-right: 1em;
+    padding-left: 1em;
+}
+
+.resultsCell a {
+    text-decoration: none;
+    color: black;
+}
+
+.resultsCell a:hover {
+  background-color: #eeeeee;
+}
+    </style>
+</head>
+<body>
+    <div id="searchContainer" class="searchContainerEmpty">
+        <h1 class="searchPrompt">GCP IAM Permission Search</h1>
+        <input class="searchInput" id="search" type="text" placeholder="GCP IAM Permission" autofocus />
+        <div id="results">
+    
+        </div>
+    </div>
+    <script>
+const searchElement = document.getElementById('search');
+const resultsElement = document.getElementById('results');
+const searchContainer = document.getElementById('searchContainer');
+searchResults = []
+headItem = 0
+const maxItems = 200
+const minSearchLength = 4
+
+    const searchData = (event) => {
+        const value = event.target.value;
+        headItem = 0
+        if (value.length < minSearchLength) {
+            console.log("Search term too short")
+            resultsElement.innerHTML = `<div>Please type at least ${minSearchLength} characters of the permission name</div>`
+            if (value.length == 0) {
+                searchContainer.className = "searchContainerEmpty"
+            }
+            return
+        }
+        let res = fetch('/query?qp=' + value)
+            .then((res) => {
+                jsonPromise = res.json()
+                jsonPromise.then((data) => {
+                    console.log(`fetch complete: result size: ${data.length}`)
+                    searchResults = data
+                    if (data.length == 0) {
+                        resultsElement.innerHTML = "<div>No data</div>"
+                        searchContainer.className = "searchContainerEmpty"
+                        console.log("No data")
+                        return
+                    }
+                    data = searchResults.slice(headItem, headItem + maxItems)
+                    searchContainer.className = "searchContainerWithResults"
+                    resultCountDiv = `<div>(Showing ${maxItems} of ${searchResults.length} results)</div>`
+                    if (searchResults.length <= maxItems) {
+                        resultCountDiv = ""
+                    }
+                    header = `<div class="resultsTable">
+                                <div class="resultsRow resultsHeader">
+                                    <div class="resultsCell">Permission</div>
+                                    <div class="resultsCell">Role</div>
+                                </div> 
+                        `;
+                    footer = `</div>`
+                    rows = data.map((item) => {
+                        role = item.role.replace(/^(roles\/)/,"");
+                        return `
+                        <div class="resultsRow">
+                            <div class="resultsCell">${item.permission}</div>
+                            <div class="resultsCell">
+                                <a href="https://cloud.google.com/iam/docs/understanding-roles#${role}" 
+                                    target="_blank"
+                                    title="View documenation for role ${role}"
+                                    aria-label="View documenation for role ${role}"
+                                    >
+                                    ${role}
+                                </a>
+                            </div>
+                        </div> `;
+                    }).join('');
+                    resultsElement.innerHTML = header + rows + resultCountDiv + footer
+                });
+            })
+}
+
+const debounce = (callback, waitTime) => {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            callback(...args);
+        }, waitTime);
+    };
+}
+
+const debounceHandler = debounce(searchData, 1000);
+searchElement.addEventListener('input', debounceHandler);        
+    </script>
+</body>
+</html>

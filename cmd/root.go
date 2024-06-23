@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var DbName string
+
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "gcp_iam_map",
@@ -43,4 +45,5 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	RootCmd.PersistentFlags().StringVarP(&DbName, "db", "d", "iam.db", "database name")
 }

@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	dbName     string
 	cpuProfile string
 )
 
@@ -73,6 +72,10 @@ func queryCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("query called: '%s'\n\n", queryString)
+	dbName, err := cmd.Flags().GetString("db")
+	if err != nil {
+		return fmt.Errorf("error getting database name: %w", err)
+	}
 
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
@@ -90,6 +93,5 @@ func queryCommand(cmd *cobra.Command, args []string) error {
 
 func init() {
 	RootCmd.AddCommand(queryCmd)
-	queryCmd.Flags().StringVarP(&dbName, "db", "d", "iam.db", "database name")
 	queryCmd.Flags().StringVarP(&cpuProfile, "cpu", "c", "", "cpu profile")
 }

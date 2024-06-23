@@ -58,7 +58,8 @@ func handleRolePage(ctx context.Context, db *sql.DB, response *iam.ListRolesResp
 			}
 		}
 
-		fmt.Printf("Role: %#v\nPermissions: %#v\n", role.Name, role.IncludedPermissions)
+		// fmt.Printf("Role: %#v\nPermissions: %#v\n", role.Name, role.IncludedPermissions)
+		fmt.Print(".")
 	}
 	return nil
 }

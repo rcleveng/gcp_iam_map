@@ -83,10 +83,11 @@ const minSearchLength = 4
         const value = event.target.value;
         headItem = 0
         if (value.length < minSearchLength) {
-            console.log("Search term too short")
-            resultsElement.innerHTML = `<div>Please type at least ${minSearchLength} characters of the permission name</div>`
             if (value.length == 0) {
+                resultsElement.innerHTML = ""
                 searchContainer.className = "searchContainerEmpty"
+            } else {
+                resultsElement.innerHTML = `<div>Please type at least ${minSearchLength} characters of the permission name</div>`
             }
             return
         }

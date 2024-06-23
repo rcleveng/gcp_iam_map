@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/rcleveng/gcp_iam_map/cmd"
-	_ "github.com/rcleveng/gcp_iam_map/cmd/maker"
-	_ "github.com/rcleveng/gcp_iam_map/cmd/server"
+	"github.com/rcleveng/gcp_iam_search/cmd"
+	_ "github.com/rcleveng/gcp_iam_search/cmd/createdb"
+	_ "github.com/rcleveng/gcp_iam_search/cmd/server"
 )
 
 func main() {

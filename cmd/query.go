@@ -21,25 +21,26 @@ var queryCmd = &cobra.Command{
 	Short: "queries a sqlite database for permissions/roles",
 	Long: `queries a sqlite database for permissions/roles. For example:
 
-gcp_iam_map queries an existing database for roles and permissions.`,
+gcp_iam_search queries an existing database for roles and permissions.`,
 	RunE: queryCommand,
 }
 
 func query(db *sql.DB, queryString string) error {
+	fmt.Printf("Searching for IAM permision substring: '%s'\n\n", queryString)
+
 	ctx := context.Background()
 	rows, err := db.QueryContext(ctx, `
 SELECT r.name, p.permission
    FROM roles r
    JOIN role_permissions rp ON r.id = rp.role_id
    JOIN permissions p ON rp.permission_id = p.id
-   WHERE r.name LIKE ?`, "roles/%"+queryString+"%")
+   WHERE p.permission LIKE ?`, "%"+queryString+"%")
 	if err != nil {
 		return fmt.Errorf("error inserting role: %w", err)
 	}
 	defer rows.Close()
 
-	fmt.Printf("Rows: %#v\n", rows)
-
+	count := 0
 	for rows.Next() {
 		var roleName, permission string
 		err = rows.Scan(&roleName, &permission)
@@ -47,6 +48,11 @@ SELECT r.name, p.permission
 			return fmt.Errorf("error scanning row: %w", err)
 		}
 		fmt.Printf("%s: %s\n", roleName, permission)
+		count++
+	}
+
+	if count == 0 {
+		fmt.Println("No results found.")
 	}
 
 	return nil
@@ -66,12 +72,11 @@ func queryCommand(cmd *cobra.Command, args []string) error {
 		defer pprof.StopCPUProfile()
 	}
 
-	queryString := args[0]
-	if len(queryString) == 0 {
+	if len(args) == 0 {
 		return fmt.Errorf("query string is empty")
 	}
+	queryString := args[0]
 
-	fmt.Printf("query called: '%s'\n\n", queryString)
 	dbName, err := cmd.Flags().GetString("db")
 	if err != nil {
 		return fmt.Errorf("error getting database name: %w", err)

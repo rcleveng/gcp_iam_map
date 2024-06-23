@@ -1,4 +1,4 @@
-package maker
+package createdb
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	// Add this import
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/rcleveng/gcp_iam_map/cmd"
+	"github.com/rcleveng/gcp_iam_search/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -19,18 +19,16 @@ var (
 )
 
 func init() {
-	cmd.RootCmd.AddCommand(MakerCmd)
-	// MakerCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.maker.yaml)")
-	MakerCmd.Flags().BoolVarP(&overwrite, "overrite", "o", false, "Overwrite existing database")
-	// MakerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	cmd.RootCmd.AddCommand(CreateDbCommand)
+	CreateDbCommand.Flags().BoolVarP(&overwrite, "overrite", "o", false, "Overwrite existing database")
 }
 
-// MakerCmd represents the maker command
-var MakerCmd = &cobra.Command{
-	Use:   "maker",
+// CreateDbCommand represents the createdb command
+var CreateDbCommand = &cobra.Command{
+	Use:   "createdb",
 	Short: "Creates a sqlite database from IAM roles and permissions",
 	Long:  `Creates a sqlite database from IAM roles and permissions`,
-	RunE:  makerCmdRun,
+	RunE:  createDbCmdRun,
 }
 
 func handleRolePage(ctx context.Context, db *sql.DB, response *iam.ListRolesResponse) error {
@@ -103,8 +101,8 @@ CREATE TABLE [role_permissions] (
 	return nil
 }
 
-func makerCmdRun(cmd *cobra.Command, args []string) error {
-	fmt.Println("maker called")
+func createDbCmdRun(cmd *cobra.Command, args []string) error {
+	fmt.Println("createdb called")
 	if len(args) == 0 {
 		return fmt.Errorf("please provide a filename")
 	}

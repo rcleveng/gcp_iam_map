@@ -1,4 +1,4 @@
-module github.com/rcleveng/gcp_iam_map
+module github.com/rcleveng/gcp_iam_search
 
 go 1.21.5
 

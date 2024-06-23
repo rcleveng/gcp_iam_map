@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	root "github.com/rcleveng/gcp_iam_map/cmd"
+	root "github.com/rcleveng/gcp_iam_search/cmd"
 
 	"github.com/spf13/cobra"
 )
@@ -43,8 +43,6 @@ func query(db *sql.DB, sql string, bindVar string) ([]RolePermissions, error) {
 		return nil, fmt.Errorf("error inserting role: %w", err)
 	}
 	defer rows.Close()
-
-	fmt.Printf("Rows: %#v\n", rows)
 
 	for rows.Next() {
 		var rp RolePermissions
@@ -112,9 +110,6 @@ func queryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 }
 
 func serverCommand(cmd *cobra.Command, args []string) error {
-
-	fmt.Printf("server called\n\n")
-
 	db, err := sql.Open("sqlite3", root.DbName)
 	if err != nil {
 		return fmt.Errorf("error opening database: %w", err)
@@ -127,6 +122,7 @@ func serverCommand(cmd *cobra.Command, args []string) error {
 	http.Handle("/", http.FileServer(http.Dir("html/")))
 
 	port := fmt.Sprintf(":%d", port)
+	fmt.Printf("Server running at URL: http://localhost%s/\n\n", port)
 	log.Fatal(http.ListenAndServe(port, nil))
 
 	return nil

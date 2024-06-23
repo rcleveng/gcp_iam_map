@@ -1,9 +1,19 @@
 package cmd
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	"log"
+	"os"
+	"runtime/pprof"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	dbName     string
+	cpuProfile string
 )
 
 // queryCmd represents the query command
@@ -13,15 +23,73 @@ var queryCmd = &cobra.Command{
 	Long: `queries a sqlite database for permissions/roles. For example:
 
 gcp_iam_map queries an existing database for roles and permissions.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("query called")
-	},
+	RunE: queryCommand,
+}
+
+func query(db *sql.DB, queryString string) error {
+	ctx := context.Background()
+	rows, err := db.QueryContext(ctx, `
+SELECT r.name, p.permission
+   FROM roles r
+   JOIN role_permissions rp ON r.id = rp.role_id
+   JOIN permissions p ON rp.permission_id = p.id
+   WHERE r.name LIKE ?`, "roles/%"+queryString+"%")
+	if err != nil {
+		return fmt.Errorf("error inserting role: %w", err)
+	}
+	defer rows.Close()
+
+	fmt.Printf("Rows: %#v\n", rows)
+
+	for rows.Next() {
+		var roleName, permission string
+		err = rows.Scan(&roleName, &permission)
+		if err != nil {
+			return fmt.Errorf("error scanning row: %w", err)
+		}
+		fmt.Printf("%s: %s\n", roleName, permission)
+	}
+
+	return nil
+}
+
+func queryCommand(cmd *cobra.Command, args []string) error {
+
+	if cpuProfile != "" {
+		f, err := os.Create(cpuProfile)
+		if err != nil {
+			return fmt.Errorf("could not create CPU profile: %w", err)
+		}
+		defer f.Close() // error handling omitted for example
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
+	queryString := args[0]
+	if len(queryString) == 0 {
+		return fmt.Errorf("query string is empty")
+	}
+
+	fmt.Printf("query called: '%s'\n\n", queryString)
+
+	db, err := sql.Open("sqlite3", dbName)
+	if err != nil {
+		return fmt.Errorf("error opening database: %w", err)
+	}
+	defer db.Close()
+
+	err = query(db, queryString)
+	if err != nil {
+		return fmt.Errorf("error querying database: %w", err)
+	}
+
+	return nil
 }
 
 func init() {
 	RootCmd.AddCommand(queryCmd)
-
-	// queryCmd.PersistentFlags().String("query", "", "A help for query")
-
-	// queryCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	queryCmd.Flags().StringVarP(&dbName, "db", "d", "iam.db", "database name")
+	queryCmd.Flags().StringVarP(&cpuProfile, "cpu", "c", "", "cpu profile")
 }

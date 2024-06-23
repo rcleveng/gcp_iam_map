@@ -124,7 +124,7 @@ func serverCommand(cmd *cobra.Command, args []string) error {
 	http.HandleFunc("/query", func(w http.ResponseWriter, r *http.Request) {
 		queryHandler(w, r, db)
 	})
-	http.Handle("/", http.FileServer(http.Dir("public/")))
+	http.Handle("/", http.FileServer(http.Dir("html/")))
 
 	port := fmt.Sprintf(":%d", port)
 	log.Fatal(http.ListenAndServe(port, nil))

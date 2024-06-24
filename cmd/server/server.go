@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	root "github.com/rcleveng/gcp_iam_search/cmd"
+	"github.com/rcleveng/gcp_iam_search/pkg/iamdb"
 
 	"github.com/spf13/cobra"
 )
@@ -30,67 +30,22 @@ var serverCmd = &cobra.Command{
 	RunE:  serverCommand,
 }
 
-type RolePermissions struct {
-	Role       string `json:"role,omitempty"`
-	Permission string `json:"permission,omitempty"`
-}
-
-func query(db *sql.DB, sql string, bindVar string) ([]RolePermissions, error) {
-	ctx := context.Background()
-	rps := make([]RolePermissions, 0, 100)
-	rows, err := db.QueryContext(ctx, sql, bindVar)
-	if err != nil {
-		return nil, fmt.Errorf("error inserting role: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var rp RolePermissions
-		err = rows.Scan(&rp.Role, &rp.Permission)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning row: %w", err)
-		}
-		fmt.Printf("%s: %s\n", rp.Role, rp.Permission)
-		rps = append(rps, rp)
-	}
-
-	return rps, nil
-}
-
-func queryRoles(db *sql.DB, part string) ([]RolePermissions, error) {
-
-	return query(db, `
-		SELECT r.name, p.permission
-		FROM roles r
-		JOIN role_permissions rp ON r.id = rp.role_id
-		JOIN permissions p ON rp.permission_id = p.id
-		WHERE r.name LIKE ?`,
-		"roles/%"+part+"%")
-}
-
-func queryPermissions(db *sql.DB, part string) ([]RolePermissions, error) {
-
-	return query(db, `
-		SELECT r.name, p.permission
-		FROM roles r
-		JOIN role_permissions rp ON r.id = rp.role_id
-		JOIN permissions p ON rp.permission_id = p.id
-		WHERE p.permission LIKE ?`,
-		"%"+part+"%")
-}
-
-func queryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func queryHandler(w http.ResponseWriter, r *http.Request, db *iamdb.IamDB) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var perm []RolePermissions
+	var perm []iamdb.RolePermissions
 	var err error
 	qr := r.URL.Query().Get("qr")
 	qp := r.URL.Query().Get("qp")
+	wildcard, err := strconv.ParseBool(r.URL.Query().Get("wildcard"))
+	if err != nil {
+		wildcard = false
+	}
 
 	if len(qr) > 0 {
-		perm, err = queryRoles(db, qr)
+		perm, err = db.QueryRoles(qr, wildcard)
 	} else if len(qp) > 0 {
-		perm, err = queryPermissions(db, qp)
+		perm, err = db.QueryPermissions(qp, wildcard)
 	} else {
 		err = fmt.Errorf("no query parameter 'qr' or 'qp' provided")
 	}
@@ -110,9 +65,9 @@ func queryHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 }
 
 func serverCommand(cmd *cobra.Command, args []string) error {
-	db, err := sql.Open("sqlite3", root.DbName)
+	db, err := iamdb.NewIamDB(root.DbName)
 	if err != nil {
-		return fmt.Errorf("error opening database: %w", err)
+		return fmt.Errorf("error creating database: %w", err)
 	}
 	defer db.Close()
 

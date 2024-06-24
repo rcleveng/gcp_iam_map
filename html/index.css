@@ -1,0 +1,99 @@
+body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.bodyWithoutResults {
+    justify-content: center;
+    align-items: center;
+}
+
+.bodyWithResults {
+    justify-content: start;
+    align-items: center;
+}
+
+#searchContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.searchInput {
+    min-width: min(600px, 95vw);
+    align-items: center;
+}
+
+.searchPrompt {
+    text-align: center;
+    font-size: 2.125rem;
+}
+
+.searchContainerItem {
+    width: 95vw;
+    max-width: 95vw;
+    justify-content: center;
+    text-align: center;
+    padding-top: 1em;
+}
+
+.resultsTable {
+    display: table;
+    margin-top: 1em;
+}
+
+.resultsRow {
+    display: table-row;
+}
+
+.resultsHeader {
+    font-weight: bold;
+    background-color: lightgray;
+}
+
+.permCell {
+    display: table-cell;
+    word-wrap: break-word;
+    padding-right: 1em;
+    padding-left: 1em;
+}
+
+.permCellHidden {
+    display: none;
+    padding-right: 1em;
+    padding-left: 1em;
+}
+
+.roleCell {
+    display: table-cell;
+    padding-right: 1em;
+    padding-left: 1em;
+}
+
+.roleCell a {
+    text-decoration: none;
+    color: black;
+}
+
+.roleCell a:hover {
+  background-color: #eeeeee;
+}
+
+@media only screen and (max-width: 768px) {
+    .searchResults {
+        width: 100%;
+    }
+    .searchPrompt {
+        width: 95vw;
+        max-width: 95vw;
+    }
+    input, select { 
+        height:50px;
+        font-size: larger;
+    }
+    div {
+        font-size: large;
+    }
+}

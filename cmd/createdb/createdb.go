@@ -8,7 +8,6 @@ import (
 
 	iam "google.golang.org/api/iam/v1"
 
-	// Add this import
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rcleveng/gcp_iam_search/cmd"
 	"github.com/spf13/cobra"
